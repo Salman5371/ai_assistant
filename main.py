@@ -5,6 +5,7 @@ from automation.system_control import open_folder, shutdown_computer, restart_co
 from ai.wikipedia_search import get_wikipedia_summary
 from ai.memory import save_memory, read_memory, clear_memory
 from ai.notes import save_note, read_notes, clear_notes
+from cyber.password_checker import check_password_strength
 import datetime
 
 
@@ -25,13 +26,14 @@ def safe_speak(text):
 def safe_listen():
     """
     Safely listen to user's voice.
+    If microphone/listening fails, return None so the assistant can stop.
     """
     try:
         return listen()
     except Exception as error:
         print("Listening error:", error)
-        safe_speak("Sorry, I could not listen properly.")
-        return ""
+        safe_speak("Microphone is not working. Please install PyAudio or check your microphone.")
+        return None
 
 
 def safe_process_command(command):
@@ -68,8 +70,9 @@ def process_command(command):
     command = command.lower().strip()
 
     # 1. Empty command
+    # Do not speak repeatedly for empty/noise input.
     if command == "":
-        safe_speak("I did not understand. Please say again.")
+        print("No command detected.")
         return True
 
     # 2. Stop assistant
@@ -122,6 +125,10 @@ def process_command(command):
         Say take note followed by your note.
         Say show notes to hear your notes.
         Say clear notes to delete notes.
+
+        Cybersecurity commands:
+        Say check password strength followed by a demo password.
+        Say check password followed by a demo password.
 
         Folder commands:
         Say open downloads folder.
@@ -236,7 +243,35 @@ def process_command(command):
         response = clear_notes()
         safe_speak(response)
 
-    # 11. Folder automation
+    # 11. Password strength checker
+    elif command.startswith("check password strength"):
+        password = command.replace("check password strength", "", 1).strip()
+
+        if password:
+            response = check_password_strength(password)
+            safe_speak(response)
+        else:
+            safe_speak("Please say a demo password after check password strength.")
+
+    elif command.startswith("check password"):
+        password = command.replace("check password", "", 1).strip()
+
+        if password:
+            response = check_password_strength(password)
+            safe_speak(response)
+        else:
+            safe_speak("Please say a demo password after check password.")
+
+    elif command.startswith("password strength"):
+        password = command.replace("password strength", "", 1).strip()
+
+        if password:
+            response = check_password_strength(password)
+            safe_speak(response)
+        else:
+            safe_speak("Please say a demo password after password strength.")
+
+    # 12. Folder automation
     elif "open downloads folder" in command or "open download folder" in command:
         response = open_folder("downloads")
         safe_speak(response)
@@ -261,7 +296,7 @@ def process_command(command):
         response = open_folder("videos")
         safe_speak(response)
 
-    # 12. Safe shutdown/restart
+    # 13. Safe shutdown/restart
     elif "shutdown computer" in command or "shut down computer" in command:
         pending_action = "shutdown"
         safe_speak("Are you sure? Say confirm shutdown to continue or cancel to stop.")
@@ -274,7 +309,7 @@ def process_command(command):
         response = cancel_shutdown()
         safe_speak(response)
 
-    # 13. Website commands
+    # 14. Website commands
     elif "youtube" in command:
         safe_speak("Opening YouTube")
         open_website("https://www.youtube.com")
@@ -303,7 +338,7 @@ def process_command(command):
         safe_speak("Opening Stack Overflow")
         open_website("https://stackoverflow.com")
 
-    # 14. App commands
+    # 15. App commands
     elif "chrome" in command:
         safe_speak("Opening Chrome")
         open_app("chrome")
@@ -316,7 +351,7 @@ def process_command(command):
         safe_speak("Opening Calculator")
         open_app("calculator")
 
-    # 15. Wikipedia commands kept near the end
+    # 16. Wikipedia commands kept near the end
     # This prevents "what is the time" from going to Wikipedia
     elif command.startswith("who is"):
         query = command.replace("who is", "", 1).strip()
@@ -338,7 +373,7 @@ def process_command(command):
         else:
             safe_speak("What should I search for?")
 
-    # 16. Unknown command
+    # 17. Unknown command
     else:
         safe_speak("This command is not available yet.")
 
@@ -353,6 +388,11 @@ def main():
 
     while running:
         command = safe_listen()
+
+        if command is None:
+            safe_speak("Assistant stopped because microphone is not available.")
+            break
+
         running = safe_process_command(command)
 
 
