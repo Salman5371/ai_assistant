@@ -46,6 +46,22 @@ def safe_process_command(command):
         return True
 
 
+def get_greeting():
+    """
+    Return greeting based on current time.
+    """
+    current_hour = datetime.datetime.now().hour
+
+    if 5 <= current_hour < 12:
+        return "Good morning"
+    elif 12 <= current_hour < 17:
+        return "Good afternoon"
+    elif 17 <= current_hour < 21:
+        return "Good evening"
+    else:
+        return "Good night"
+
+
 def process_command(command):
     global pending_action
 
@@ -305,7 +321,8 @@ def process_command(command):
 
 
 def main():
-    safe_speak("Hello Salman Farshi. Your AI assistant is ready.")
+    greeting = get_greeting()
+    safe_speak(f"{greeting} Salman Farshi. Your AI assistant is ready.")
 
     running = True
 
