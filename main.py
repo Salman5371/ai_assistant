@@ -3,6 +3,7 @@ from voice.speak import speak
 from automation.app_control import open_website, open_app, search_google, search_youtube
 from ai.wikipedia_search import get_wikipedia_summary
 from ai.memory import save_memory, read_memory, clear_memory
+from ai.notes import save_note, read_notes, clear_notes
 import datetime
 
 
@@ -63,7 +64,26 @@ def process_command(command):
     elif "clear memory" in command or "delete memory" in command:
         response = clear_memory()
         speak(response)        
+    
+    elif command.startswith("take note") or command.startswith("add note"):
+        if command.startswith("take note"):
+            note_text = command.replace("take note", "", 1).strip()
+        else:
+            note_text = command.replace("add note", "", 1).strip()
 
+        if note_text:
+            response = save_note(note_text)
+            speak(response)
+        else:
+            speak("What note should I save?")
+
+    elif "show notes" in command or "read notes" in command:
+        notes = read_notes()
+        speak(notes)
+
+    elif "clear notes" in command or "delete notes" in command:
+        response = clear_notes()
+        speak(response)
 
 
     elif "youtube" in command:
