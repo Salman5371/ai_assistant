@@ -11,6 +11,44 @@ import datetime
 pending_action = None
 
 
+def safe_speak(text):
+    """
+    This function safely speaks text.
+    If text-to-speech fails, it will print the error instead of crashing.
+    """
+    try:
+        speak(text)
+    except Exception as error:
+        print("Speak error:", error)
+        print("Assistant:", text)
+
+
+def safe_listen():
+    """
+    This function safely listens to user's voice.
+    If microphone/listening fails, it will return an empty command.
+    """
+    try:
+        return listen()
+    except Exception as error:
+        print("Listening error:", error)
+        safe_speak("Sorry, I could not listen properly.")
+        return ""
+
+
+def safe_process_command(command):
+    """
+    This function safely processes commands.
+    If any command causes an error, the assistant will not crash.
+    """
+    try:
+        return process_command(command)
+    except Exception as error:
+        print("Command processing error:", error)
+        safe_speak("Sorry, something went wrong while processing your command.")
+        return True
+
+
 def process_command(command):
     global pending_action
 
@@ -19,26 +57,26 @@ def process_command(command):
         if "confirm" in command or "yes" in command:
             if pending_action == "shutdown":
                 response = shutdown_computer()
-                speak(response)
+                safe_speak(response)
 
             elif pending_action == "restart":
                 response = restart_computer()
-                speak(response)
+                safe_speak(response)
 
             pending_action = None
             return True
 
         elif "cancel" in command or "no" in command:
-            speak("Action cancelled.")
+            safe_speak("Action cancelled.")
             pending_action = None
             return True
 
         else:
-            speak("Please say confirm or cancel.")
+            safe_speak("Please say confirm or cancel.")
             return True
 
     if command == "":
-        speak("I did not understand. Please say again.")
+        safe_speak("I did not understand. Please say again.")
 
     # Help command
     elif command == "help" or "what can you do" in command:
@@ -78,62 +116,62 @@ def process_command(command):
         Say what is the time.
         Say stop to close me.
         """
-        speak(help_text)
+        safe_speak(help_text)
 
     elif command.startswith("youtube search"):
         query = command.replace("youtube search", "", 1).strip()
 
         if query:
-            speak(f"Searching YouTube for {query}")
+            safe_speak(f"Searching YouTube for {query}")
             search_youtube(query)
         else:
-            speak("What should I search on YouTube?")
+            safe_speak("What should I search on YouTube?")
 
     elif command.startswith("search"):
         query = command.replace("search", "", 1).strip()
 
         if query:
-            speak(f"Searching Google for {query}")
+            safe_speak(f"Searching Google for {query}")
             search_google(query)
         else:
-            speak("What should I search for?")
+            safe_speak("What should I search for?")
 
     elif command.startswith("who is"):
         query = command.replace("who is", "", 1).strip()
 
         if query:
-            speak(f"Searching Wikipedia for {query}")
+            safe_speak(f"Searching Wikipedia for {query}")
             result = get_wikipedia_summary(query)
-            speak(result)
+            safe_speak(result)
         else:
-            speak("Who should I search for?")
+            safe_speak("Who should I search for?")
 
     elif command.startswith("what is"):
         query = command.replace("what is", "", 1).strip()
 
         if query:
-            speak(f"Searching Wikipedia for {query}")
+            safe_speak(f"Searching Wikipedia for {query}")
             result = get_wikipedia_summary(query)
-            speak(result)
+            safe_speak(result)
         else:
-            speak("What should I search for?")
+            safe_speak("What should I search for?")
 
     elif command.startswith("remember"):
         memory_text = command.replace("remember", "", 1).strip()
 
         if memory_text:
             response = save_memory(memory_text)
-            speak(response)
+            safe_speak(response)
         else:
-            speak("What should I remember?")
+            safe_speak("What should I remember?")
 
     elif "what do you remember" in command or "show memory" in command:
         memories = read_memory()
-        speak(memories)
+        safe_speak(memories)
 
     elif "clear memory" in command or "delete memory" in command:
         response = clear_memory()
-        speak(response)
+        safe_speak(response)
 
     elif command.startswith("take note") or command.startswith("add note"):
         if command.startswith("take note"):
@@ -143,97 +181,97 @@ def process_command(command):
 
         if note_text:
             response = save_note(note_text)
-            speak(response)
+            safe_speak(response)
         else:
-            speak("What note should I save?")
+            safe_speak("What note should I save?")
 
     elif "show notes" in command or "read notes" in command:
         notes = read_notes()
-        speak(notes)
+        safe_speak(notes)
 
     elif "clear notes" in command or "delete notes" in command:
         response = clear_notes()
-        speak(response)
+        safe_speak(response)
 
     elif "open downloads folder" in command or "open download folder" in command:
         response = open_folder("downloads")
-        speak(response)
+        safe_speak(response)
 
     elif "open desktop folder" in command or "open desktop" in command:
         response = open_folder("desktop")
-        speak(response)
+        safe_speak(response)
 
     elif "open documents folder" in command or "open document folder" in command:
         response = open_folder("documents")
-        speak(response)
+        safe_speak(response)
 
     elif "open pictures folder" in command or "open picture folder" in command:
         response = open_folder("pictures")
-        speak(response)
+        safe_speak(response)
 
     elif "open music folder" in command:
         response = open_folder("music")
-        speak(response)
+        safe_speak(response)
 
     elif "open videos folder" in command or "open video folder" in command:
         response = open_folder("videos")
-        speak(response)
+        safe_speak(response)
 
     # Safe shutdown / restart commands
     elif "shutdown computer" in command or "shut down computer" in command:
         pending_action = "shutdown"
-        speak("Are you sure? Say confirm shutdown to continue or cancel to stop.")
+        safe_speak("Are you sure? Say confirm shutdown to continue or cancel to stop.")
 
     elif "restart computer" in command or "reboot computer" in command:
         pending_action = "restart"
-        speak("Are you sure? Say confirm restart to continue or cancel to stop.")
+        safe_speak("Are you sure? Say confirm restart to continue or cancel to stop.")
 
     elif "cancel shutdown" in command or "abort shutdown" in command:
         response = cancel_shutdown()
-        speak(response)
+        safe_speak(response)
 
     elif "youtube" in command:
-        speak("Opening YouTube")
+        safe_speak("Opening YouTube")
         open_website("https://www.youtube.com")
 
     elif "google" in command:
-        speak("Opening Google")
+        safe_speak("Opening Google")
         open_website("https://www.google.com")
 
     elif "chrome" in command:
-        speak("Opening Chrome")
+        safe_speak("Opening Chrome")
         open_app("chrome")
 
     elif "notepad" in command:
-        speak("Opening Notepad")
+        safe_speak("Opening Notepad")
         open_app("notepad")
 
     elif "calculator" in command:
-        speak("Opening Calculator")
+        safe_speak("Opening Calculator")
         open_app("calculator")
 
     elif "time" in command:
         current_time = datetime.datetime.now().strftime("%I:%M %p")
-        speak(f"The time is {current_time}")
+        safe_speak(f"The time is {current_time}")
 
     elif "stop" in command or "exit" in command or "quit" in command:
-        speak("Goodbye")
+        safe_speak("Goodbye")
         return False
 
     else:
-        speak("This command is not available yet.")
+        safe_speak("This command is not available yet.")
 
     return True
 
 
 def main():
-    speak("Hello Salman Farshi. Your AI assistant is ready.")
+    safe_speak("Hello Salman Farshi. Your AI assistant is ready.")
 
     running = True
 
     while running:
-        command = listen()
-        running = process_command(command)
+        command = safe_listen()
+        running = safe_process_command(command)
 
 
 if __name__ == "__main__":
