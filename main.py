@@ -40,6 +40,46 @@ def process_command(command):
     if command == "":
         speak("I did not understand. Please say again.")
 
+    # Help command
+    elif command == "help" or "what can you do" in command:
+        help_text = """
+        I can help you with these commands:
+
+        Say youtube search followed by a topic.
+        Say search followed by a topic.
+        Say who is followed by a person's name.
+        Say what is followed by a topic.
+
+        Say remember followed by something to save memory.
+        Say what do you remember to hear saved memory.
+        Say clear memory to delete memory.
+
+        Say take note followed by your note.
+        Say show notes to hear your notes.
+        Say clear notes to delete notes.
+
+        Say open downloads folder.
+        Say open desktop folder.
+        Say open documents folder.
+        Say open pictures folder.
+        Say open music folder.
+        Say open videos folder.
+
+        Say shutdown computer.
+        Say restart computer.
+        Say cancel shutdown.
+
+        Say open youtube.
+        Say open google.
+        Say open chrome.
+        Say open notepad.
+        Say open calculator.
+
+        Say what is the time.
+        Say stop to close me.
+        """
+        speak(help_text)
+
     elif command.startswith("youtube search"):
         query = command.replace("youtube search", "", 1).strip()
 
