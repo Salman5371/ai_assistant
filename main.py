@@ -1,11 +1,21 @@
 from voice.listen import listen
 from voice.speak import speak
-from automation.app_control import open_website, open_app
+from automation.app_control import open_website, open_app, search_google
 import datetime
+
 
 def process_command(command):
     if command == "":
         speak("I did not understand. Please say again.")
+
+    elif command.startswith("search"):
+        query = command.replace("search", "", 1).strip()
+
+        if query:
+            speak(f"Searching Google for {query}")
+            search_google(query)
+        else:
+            speak("What should I search for?")
 
     elif "youtube" in command:
         speak("Opening YouTube")

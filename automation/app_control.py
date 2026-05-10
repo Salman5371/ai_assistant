@@ -1,9 +1,17 @@
 import webbrowser
 import subprocess
 import platform
+from urllib.parse import quote_plus
+
 
 def open_website(url):
     webbrowser.open(url)
+
+
+def search_google(query):
+    search_url = "https://www.google.com/search?q=" + quote_plus(query)
+    webbrowser.open(search_url)
+
 
 def open_app(app_name):
     system = platform.system()
