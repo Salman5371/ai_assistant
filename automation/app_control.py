@@ -13,6 +13,12 @@ def search_google(query):
     webbrowser.open(search_url)
 
 
+
+def search_youtube(query):
+    search_url = "https://www.youtube.com/results?search_query=" + quote_plus(query)
+    webbrowser.open(search_url)
+
+
 def open_app(app_name):
     system = platform.system()
 
