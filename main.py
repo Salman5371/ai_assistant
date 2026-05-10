@@ -6,6 +6,8 @@ from ai.wikipedia_search import get_wikipedia_summary
 from ai.memory import save_memory, read_memory, clear_memory
 from ai.notes import save_note, read_notes, clear_notes
 from cyber.password_checker import check_password_strength
+from vision.face_detection import start_face_detection
+from vision.age_gender_detection import start_age_gender_detection
 import datetime
 
 
@@ -160,6 +162,14 @@ def process_command(command):
         Say what is the date.
         Say what day is today.
 
+        Face detection command:
+        Computer vision commands:
+        Say start face detection.
+        Say face detection.
+        start age detection
+        start gender detection
+        age gender detection
+
         Say stop to close me.
         """
         safe_speak(help_text)
@@ -270,6 +280,19 @@ def process_command(command):
             safe_speak(response)
         else:
             safe_speak("Please say a demo password after password strength.")
+
+        # Age and gender detection
+    elif (
+        "start face detection" in command
+        or "start gender detection" in command
+        or "age gender detection" in command
+        or "detect age" in command
+        or "detect gender" in command
+    ):
+        safe_speak("Starting age and gender detection. Press Q to stop.")
+        response = start_age_gender_detection()
+        safe_speak(response)
+   
 
     # 12. Folder automation
     elif "open downloads folder" in command or "open download folder" in command:
