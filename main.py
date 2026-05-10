@@ -1,14 +1,42 @@
 from voice.listen import listen
 from voice.speak import speak
 from automation.app_control import open_website, open_app, search_google, search_youtube
-from automation.system_control import open_folder
+from automation.system_control import open_folder, shutdown_computer, restart_computer, cancel_shutdown
 from ai.wikipedia_search import get_wikipedia_summary
 from ai.memory import save_memory, read_memory, clear_memory
 from ai.notes import save_note, read_notes, clear_notes
 import datetime
 
 
+pending_action = None
+
+
 def process_command(command):
+    global pending_action
+
+    # Confirmation system for shutdown/restart
+    if pending_action:
+        if "confirm" in command or "yes" in command:
+            if pending_action == "shutdown":
+                response = shutdown_computer()
+                speak(response)
+
+            elif pending_action == "restart":
+                response = restart_computer()
+                speak(response)
+
+            pending_action = None
+            return True
+
+        elif "cancel" in command or "no" in command:
+            speak("Action cancelled.")
+            pending_action = None
+            return True
+
+        else:
+            speak("Please say confirm or cancel.")
+            return True
+
     if command == "":
         speak("I did not understand. Please say again.")
 
@@ -49,6 +77,7 @@ def process_command(command):
             speak(result)
         else:
             speak("What should I search for?")
+
     elif command.startswith("remember"):
         memory_text = command.replace("remember", "", 1).strip()
 
@@ -64,8 +93,8 @@ def process_command(command):
 
     elif "clear memory" in command or "delete memory" in command:
         response = clear_memory()
-        speak(response)        
-    
+        speak(response)
+
     elif command.startswith("take note") or command.startswith("add note"):
         if command.startswith("take note"):
             note_text = command.replace("take note", "", 1).strip()
@@ -110,8 +139,18 @@ def process_command(command):
         response = open_folder("videos")
         speak(response)
 
+    # Safe shutdown / restart commands
+    elif "shutdown computer" in command or "shut down computer" in command:
+        pending_action = "shutdown"
+        speak("Are you sure? Say confirm shutdown to continue or cancel to stop.")
 
+    elif "restart computer" in command or "reboot computer" in command:
+        pending_action = "restart"
+        speak("Are you sure? Say confirm restart to continue or cancel to stop.")
 
+    elif "cancel shutdown" in command or "abort shutdown" in command:
+        response = cancel_shutdown()
+        speak(response)
 
     elif "youtube" in command:
         speak("Opening YouTube")
