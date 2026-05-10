@@ -1,6 +1,7 @@
 from voice.listen import listen
 from voice.speak import speak
 from automation.app_control import open_website, open_app, search_google, search_youtube
+from ai.wikipedia_search import get_wikipedia_summary
 import datetime
 
 
@@ -25,6 +26,28 @@ def process_command(command):
             search_google(query)
         else:
             speak("What should I search for?")
+
+    elif command.startswith("who is"):
+        query = command.replace("who is", "", 1).strip()
+
+        if query:
+            speak(f"Searching Wikipedia for {query}")
+            result = get_wikipedia_summary(query)
+            speak(result)
+        else:
+            speak("Who should I search for?")
+
+    elif command.startswith("what is"):
+        query = command.replace("what is", "", 1).strip()
+
+        if query:
+            speak(f"Searching Wikipedia for {query}")
+            result = get_wikipedia_summary(query)
+            speak(result)
+        else:
+            speak("What should I search for?")
+
+
 
     elif "youtube" in command:
         speak("Opening YouTube")
@@ -61,7 +84,7 @@ def process_command(command):
 
 
 def main():
-    speak("Hello Faisal. Your AI assistant is ready.")
+    speak("Hello Salman Farshi. Your AI assistant is ready.")
 
     running = True
 
