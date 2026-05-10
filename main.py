@@ -139,6 +139,11 @@ def process_command(command):
         App and website commands:
         Say open youtube.
         Say open google.
+        Say open github.
+        Say open gmail.
+        Say open chatgpt.
+        Say open facebook.
+        Say open stack overflow.
         Say open chrome.
         Say open notepad.
         Say open calculator.
@@ -277,6 +282,26 @@ def process_command(command):
     elif "google" in command:
         safe_speak("Opening Google")
         open_website("https://www.google.com")
+
+    elif "github" in command:
+        safe_speak("Opening GitHub")
+        open_website("https://github.com")
+
+    elif "gmail" in command:
+        safe_speak("Opening Gmail")
+        open_website("https://mail.google.com")
+
+    elif "chatgpt" in command or "chat gpt" in command:
+        safe_speak("Opening ChatGPT")
+        open_website("https://chatgpt.com")
+
+    elif "facebook" in command:
+        safe_speak("Opening Facebook")
+        open_website("https://www.facebook.com")
+
+    elif "stack overflow" in command or "stackoverflow" in command:
+        safe_speak("Opening Stack Overflow")
+        open_website("https://stackoverflow.com")
 
     # 14. App commands
     elif "chrome" in command:
