@@ -1,6 +1,7 @@
 from voice.listen import listen
 from voice.speak import speak
 from automation.app_control import open_website, open_app, search_google, search_youtube
+from automation.system_control import open_folder
 from ai.wikipedia_search import get_wikipedia_summary
 from ai.memory import save_memory, read_memory, clear_memory
 from ai.notes import save_note, read_notes, clear_notes
@@ -84,6 +85,32 @@ def process_command(command):
     elif "clear notes" in command or "delete notes" in command:
         response = clear_notes()
         speak(response)
+
+    elif "open downloads folder" in command or "open download folder" in command:
+        response = open_folder("downloads")
+        speak(response)
+
+    elif "open desktop folder" in command or "open desktop" in command:
+        response = open_folder("desktop")
+        speak(response)
+
+    elif "open documents folder" in command or "open document folder" in command:
+        response = open_folder("documents")
+        speak(response)
+
+    elif "open pictures folder" in command or "open picture folder" in command:
+        response = open_folder("pictures")
+        speak(response)
+
+    elif "open music folder" in command:
+        response = open_folder("music")
+        speak(response)
+
+    elif "open videos folder" in command or "open video folder" in command:
+        response = open_folder("videos")
+        speak(response)
+
+
 
 
     elif "youtube" in command:
