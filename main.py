@@ -136,6 +136,17 @@ def process_command(command):
         else:
             safe_speak("What should I search for?")
 
+
+        # Time command
+    # Example: "what is the time", "time", "current time"
+    elif (
+        "time" in command
+        or "current time" in command
+        or "what is the time" in command
+    ):
+        current_time = datetime.datetime.now().strftime("%I:%M %p")
+        safe_speak(f"The time is {current_time}")        
+
     elif command.startswith("who is"):
         query = command.replace("who is", "", 1).strip()
 
@@ -250,9 +261,19 @@ def process_command(command):
         safe_speak("Opening Calculator")
         open_app("calculator")
 
-    elif "time" in command:
-        current_time = datetime.datetime.now().strftime("%I:%M %p")
-        safe_speak(f"The time is {current_time}")
+        # Date and day command
+    elif (
+        "date" in command
+        or "today date" in command
+        or "what day is today" in command
+        or "day today" in command
+    ):
+        today = datetime.datetime.now()
+        formatted_date = today.strftime("%A, %B %d, %Y")
+        safe_speak(f"Today is {formatted_date}")
+
+
+
 
     elif "stop" in command or "exit" in command or "quit" in command:
         safe_speak("Goodbye")
