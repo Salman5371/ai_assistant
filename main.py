@@ -2,6 +2,7 @@ from voice.listen import listen
 from voice.speak import speak
 from automation.app_control import open_website, open_app, search_google, search_youtube
 from ai.wikipedia_search import get_wikipedia_summary
+from ai.memory import save_memory, read_memory, clear_memory
 import datetime
 
 
@@ -46,6 +47,22 @@ def process_command(command):
             speak(result)
         else:
             speak("What should I search for?")
+    elif command.startswith("remember"):
+        memory_text = command.replace("remember", "", 1).strip()
+
+        if memory_text:
+            response = save_memory(memory_text)
+            speak(response)
+        else:
+            speak("What should I remember?")
+
+    elif "what do you remember" in command or "show memory" in command:
+        memories = read_memory()
+        speak(memories)
+
+    elif "clear memory" in command or "delete memory" in command:
+        response = clear_memory()
+        speak(response)        
 
 
 
