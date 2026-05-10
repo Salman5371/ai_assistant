@@ -13,8 +13,7 @@ pending_action = None
 
 def safe_speak(text):
     """
-    This function safely speaks text.
-    If text-to-speech fails, it will print the error instead of crashing.
+    Safely speak text without crashing the assistant.
     """
     try:
         speak(text)
@@ -25,8 +24,7 @@ def safe_speak(text):
 
 def safe_listen():
     """
-    This function safely listens to user's voice.
-    If microphone/listening fails, it will return an empty command.
+    Safely listen to user's voice.
     """
     try:
         return listen()
@@ -38,8 +36,7 @@ def safe_listen():
 
 def safe_process_command(command):
     """
-    This function safely processes commands.
-    If any command causes an error, the assistant will not crash.
+    Safely process command without crashing the assistant.
     """
     try:
         return process_command(command)
@@ -52,7 +49,19 @@ def safe_process_command(command):
 def process_command(command):
     global pending_action
 
-    # Confirmation system for shutdown/restart
+    command = command.lower().strip()
+
+    # 1. Empty command
+    if command == "":
+        safe_speak("I did not understand. Please say again.")
+        return True
+
+    # 2. Stop assistant
+    elif "stop" in command or "exit" in command or "quit" in command:
+        safe_speak("Goodbye")
+        return False
+
+    # 3. Pending confirmation for shutdown/restart
     if pending_action:
         if "confirm" in command or "yes" in command:
             if pending_action == "shutdown":
@@ -75,27 +84,30 @@ def process_command(command):
             safe_speak("Please say confirm or cancel.")
             return True
 
-    if command == "":
-        safe_speak("I did not understand. Please say again.")
-
-    # Help command
+    # 4. Help command
     elif command == "help" or "what can you do" in command:
         help_text = """
         I can help you with these commands:
 
+        Search commands:
         Say youtube search followed by a topic.
         Say search followed by a topic.
+
+        Wikipedia commands:
         Say who is followed by a person's name.
         Say what is followed by a topic.
 
+        Memory commands:
         Say remember followed by something to save memory.
         Say what do you remember to hear saved memory.
         Say clear memory to delete memory.
 
+        Notes commands:
         Say take note followed by your note.
         Say show notes to hear your notes.
         Say clear notes to delete notes.
 
+        Folder commands:
         Say open downloads folder.
         Say open desktop folder.
         Say open documents folder.
@@ -103,21 +115,48 @@ def process_command(command):
         Say open music folder.
         Say open videos folder.
 
+        System commands:
         Say shutdown computer.
         Say restart computer.
         Say cancel shutdown.
 
+        App and website commands:
         Say open youtube.
         Say open google.
         Say open chrome.
         Say open notepad.
         Say open calculator.
 
+        Time and date commands:
         Say what is the time.
+        Say what is the date.
+        Say what day is today.
+
         Say stop to close me.
         """
         safe_speak(help_text)
 
+    # 5. Time command
+    elif (
+        "time" in command
+        or "current time" in command
+        or "what is the time" in command
+    ):
+        current_time = datetime.datetime.now().strftime("%I:%M %p")
+        safe_speak(f"The time is {current_time}")
+
+    # 6. Date and day command
+    elif (
+        "date" in command
+        or "today date" in command
+        or "what day is today" in command
+        or "day today" in command
+    ):
+        today = datetime.datetime.now()
+        formatted_date = today.strftime("%A, %B %d, %Y")
+        safe_speak(f"Today is {formatted_date}")
+
+    # 7. YouTube search command
     elif command.startswith("youtube search"):
         query = command.replace("youtube search", "", 1).strip()
 
@@ -127,6 +166,7 @@ def process_command(command):
         else:
             safe_speak("What should I search on YouTube?")
 
+    # 8. Google search command
     elif command.startswith("search"):
         query = command.replace("search", "", 1).strip()
 
@@ -136,37 +176,7 @@ def process_command(command):
         else:
             safe_speak("What should I search for?")
 
-
-        # Time command
-    # Example: "what is the time", "time", "current time"
-    elif (
-        "time" in command
-        or "current time" in command
-        or "what is the time" in command
-    ):
-        current_time = datetime.datetime.now().strftime("%I:%M %p")
-        safe_speak(f"The time is {current_time}")        
-
-    elif command.startswith("who is"):
-        query = command.replace("who is", "", 1).strip()
-
-        if query:
-            safe_speak(f"Searching Wikipedia for {query}")
-            result = get_wikipedia_summary(query)
-            safe_speak(result)
-        else:
-            safe_speak("Who should I search for?")
-
-    elif command.startswith("what is"):
-        query = command.replace("what is", "", 1).strip()
-
-        if query:
-            safe_speak(f"Searching Wikipedia for {query}")
-            result = get_wikipedia_summary(query)
-            safe_speak(result)
-        else:
-            safe_speak("What should I search for?")
-
+    # 9. Memory system
     elif command.startswith("remember"):
         memory_text = command.replace("remember", "", 1).strip()
 
@@ -184,6 +194,7 @@ def process_command(command):
         response = clear_memory()
         safe_speak(response)
 
+    # 10. Notes system
     elif command.startswith("take note") or command.startswith("add note"):
         if command.startswith("take note"):
             note_text = command.replace("take note", "", 1).strip()
@@ -204,6 +215,7 @@ def process_command(command):
         response = clear_notes()
         safe_speak(response)
 
+    # 11. Folder automation
     elif "open downloads folder" in command or "open download folder" in command:
         response = open_folder("downloads")
         safe_speak(response)
@@ -228,7 +240,7 @@ def process_command(command):
         response = open_folder("videos")
         safe_speak(response)
 
-    # Safe shutdown / restart commands
+    # 12. Safe shutdown/restart
     elif "shutdown computer" in command or "shut down computer" in command:
         pending_action = "shutdown"
         safe_speak("Are you sure? Say confirm shutdown to continue or cancel to stop.")
@@ -241,6 +253,7 @@ def process_command(command):
         response = cancel_shutdown()
         safe_speak(response)
 
+    # 13. Website commands
     elif "youtube" in command:
         safe_speak("Opening YouTube")
         open_website("https://www.youtube.com")
@@ -249,6 +262,7 @@ def process_command(command):
         safe_speak("Opening Google")
         open_website("https://www.google.com")
 
+    # 14. App commands
     elif "chrome" in command:
         safe_speak("Opening Chrome")
         open_app("chrome")
@@ -261,24 +275,29 @@ def process_command(command):
         safe_speak("Opening Calculator")
         open_app("calculator")
 
-        # Date and day command
-    elif (
-        "date" in command
-        or "today date" in command
-        or "what day is today" in command
-        or "day today" in command
-    ):
-        today = datetime.datetime.now()
-        formatted_date = today.strftime("%A, %B %d, %Y")
-        safe_speak(f"Today is {formatted_date}")
+    # 15. Wikipedia commands kept near the end
+    # This prevents "what is the time" from going to Wikipedia
+    elif command.startswith("who is"):
+        query = command.replace("who is", "", 1).strip()
 
+        if query:
+            safe_speak(f"Searching Wikipedia for {query}")
+            result = get_wikipedia_summary(query)
+            safe_speak(result)
+        else:
+            safe_speak("Who should I search for?")
 
+    elif command.startswith("what is"):
+        query = command.replace("what is", "", 1).strip()
 
+        if query:
+            safe_speak(f"Searching Wikipedia for {query}")
+            result = get_wikipedia_summary(query)
+            safe_speak(result)
+        else:
+            safe_speak("What should I search for?")
 
-    elif "stop" in command or "exit" in command or "quit" in command:
-        safe_speak("Goodbye")
-        return False
-
+    # 16. Unknown command
     else:
         safe_speak("This command is not available yet.")
 
