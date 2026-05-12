@@ -8,6 +8,7 @@ from ai.notes import save_note, read_notes, clear_notes
 from cyber.password_checker import check_password_strength
 from vision.face_detection import start_face_detection
 from vision.age_gender_detection import start_age_gender_detection
+from vision.hand_tracking import start_hand_tracking
 import datetime
 
 
@@ -291,6 +292,17 @@ def process_command(command):
     ):
         safe_speak("Starting age and gender detection. Press Q to stop.")
         response = start_age_gender_detection()
+        safe_speak(response)
+
+            # Hand tracking
+    elif (
+        "start hand tracking" in command
+        or "hand tracking" in command
+        or "detect hand" in command
+        or "track hand" in command
+    ):
+        safe_speak("Starting hand tracking. Press Q to stop.")
+        response = start_hand_tracking()
         safe_speak(response)
    
 
