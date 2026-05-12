@@ -1,15 +1,33 @@
 from voice.listen import listen
 from voice.speak import speak
-from automation.app_control import open_website, open_app, search_google, search_youtube
-from automation.system_control import open_folder, shutdown_computer, restart_computer, cancel_shutdown
+
+from automation.app_control import (
+    open_website,
+    open_app,
+    search_google,
+    search_youtube,
+)
+
+from automation.system_control import (
+    open_folder,
+    shutdown_computer,
+    restart_computer,
+    cancel_shutdown,
+)
+
 from ai.wikipedia_search import get_wikipedia_summary
 from ai.memory import save_memory, read_memory, clear_memory
 from ai.notes import save_note, read_notes, clear_notes
+
 from cyber.password_checker import check_password_strength
+
 from vision.face_detection import start_face_detection
 from vision.age_gender_detection import start_age_gender_detection
 from vision.hand_tracking import start_hand_tracking
+from vision.vision_logger import read_vision_logs, clear_vision_logs
+
 import datetime
+import re
 
 
 pending_action = None
@@ -26,17 +44,38 @@ def safe_speak(text):
         print("Assistant:", text)
 
 
-def safe_listen():
+def get_user_command():
     """
-    Safely listen to user's voice.
-    If microphone/listening fails, return None so the assistant can stop.
+    Let user choose text command or voice command.
+
+    - Type command and press Enter = text command
+    - Press Enter without typing = voice command
+    - If voice fails, fallback to text command
     """
     try:
+        typed_command = input("\nType command or press Enter for voice: ").strip()
+
+        if typed_command:
+            print("Typed command:", typed_command)
+            return typed_command
+
+        print("Voice mode selected.")
         return listen()
+
+    except KeyboardInterrupt:
+        print("\nKeyboard interrupt detected.")
+        return "stop"
+
     except Exception as error:
         print("Listening error:", error)
-        safe_speak("Microphone is not working. Please install PyAudio or check your microphone.")
-        return None
+        print("Voice is not available. Switching to text mode.")
+
+        try:
+            typed_command = input("Type your command: ").strip()
+            return typed_command
+        except KeyboardInterrupt:
+            print("\nKeyboard interrupt detected.")
+            return "stop"
 
 
 def safe_process_command(command):
@@ -44,11 +83,45 @@ def safe_process_command(command):
     Safely process command without crashing the assistant.
     """
     try:
+        print("Detected command:", command)
         return process_command(command)
     except Exception as error:
         print("Command processing error:", error)
         safe_speak("Sorry, something went wrong while processing your command.")
         return True
+
+
+def normalize_command(command):
+    """
+    Clean command text and fix common speech recognition issues.
+    """
+    command = str(command).lower().strip()
+
+    # Remove punctuation
+    command = re.sub(r"[^\w\s]", "", command)
+
+    # Remove extra spaces
+    command = re.sub(r"\s+", " ", command).strip()
+
+    replacements = [
+        ("you tube", "youtube"),
+        ("chat gpt", "chatgpt"),
+        ("chat g p t", "chatgpt"),
+        ("g mail", "gmail"),
+        ("stack over flow", "stackoverflow"),
+        ("stack overflow", "stackoverflow"),
+        ("shut down", "shutdown"),
+        ("re boot", "reboot"),
+        ("download folder", "downloads folder"),
+        ("document folder", "documents folder"),
+        ("picture folder", "pictures folder"),
+        ("video folder", "videos folder"),
+    ]
+
+    for old, new in replacements:
+        command = command.replace(old, new)
+
+    return command
 
 
 def get_greeting():
@@ -70,16 +143,16 @@ def get_greeting():
 def process_command(command):
     global pending_action
 
-    command = command.lower().strip()
+    command = normalize_command(command)
+    print("Normalized command:", command)
 
     # 1. Empty command
-    # Do not speak repeatedly for empty/noise input.
     if command == "":
         print("No command detected.")
         return True
 
     # 2. Stop assistant
-    elif "stop" in command or "exit" in command or "quit" in command:
+    if "stop" in command or "exit" in command or "quit" in command:
         safe_speak("Goodbye")
         return False
 
@@ -107,96 +180,111 @@ def process_command(command):
             return True
 
     # 4. Help command
-    elif command == "help" or "what can you do" in command:
+    if command == "help" or "what can you do" in command:
         help_text = """
         I can help you with these commands:
 
+        Input commands:
+        Type a command in terminal and press Enter.
+        Or press Enter without typing to use voice command.
+
         Search commands:
-        Say youtube search followed by a topic.
-        Say search followed by a topic.
+        Say or type youtube search followed by a topic.
+        Say or type search followed by a topic.
 
         Wikipedia commands:
-        Say who is followed by a person's name.
-        Say what is followed by a topic.
+        Say or type who is followed by a person's name.
+        Say or type what is followed by a topic.
 
         Memory commands:
-        Say remember followed by something to save memory.
-        Say what do you remember to hear saved memory.
-        Say clear memory to delete memory.
+        Say or type remember followed by something to save memory.
+        Say or type what do you remember to hear saved memory.
+        Say or type show memory to hear saved memory.
+        Say or type clear memory to delete memory.
 
         Notes commands:
-        Say take note followed by your note.
-        Say show notes to hear your notes.
-        Say clear notes to delete notes.
+        Say or type take note followed by your note.
+        Say or type show notes to hear your notes.
+        Say or type clear notes to delete notes.
 
         Cybersecurity commands:
-        Say check password strength followed by a demo password.
-        Say check password followed by a demo password.
+        Say or type check password strength followed by a demo password.
+        Say or type check password followed by a demo password.
+
+        Computer vision commands:
+        Say or type start face detection.
+        Say or type face detection.
+        Say or type start age detection.
+        Say or type start gender detection.
+        Say or type age gender detection.
+        Say or type start hand tracking.
+        Say or type hand tracking.
+        Say or type gesture control.
+        Say or type gesture assistant.
+        Say or type show vision logs.
+        Say or type clear vision logs.
 
         Folder commands:
-        Say open downloads folder.
-        Say open desktop folder.
-        Say open documents folder.
-        Say open pictures folder.
-        Say open music folder.
-        Say open videos folder.
+        Say or type open downloads folder.
+        Say or type open desktop folder.
+        Say or type open documents folder.
+        Say or type open pictures folder.
+        Say or type open music folder.
+        Say or type open videos folder.
 
         System commands:
-        Say shutdown computer.
-        Say restart computer.
-        Say cancel shutdown.
+        Say or type shutdown computer.
+        Say or type restart computer.
+        Say or type cancel shutdown.
 
         App and website commands:
-        Say open youtube.
-        Say open google.
-        Say open github.
-        Say open gmail.
-        Say open chatgpt.
-        Say open facebook.
-        Say open stack overflow.
-        Say open chrome.
-        Say open notepad.
-        Say open calculator.
+        Say or type open youtube.
+        Say or type open google.
+        Say or type open github.
+        Say or type open gmail.
+        Say or type open chatgpt.
+        Say or type open facebook.
+        Say or type open stack overflow.
+        Say or type open chrome.
+        Say or type open notepad.
+        Say or type open calculator.
 
         Time and date commands:
-        Say what is the time.
-        Say what is the date.
-        Say what day is today.
+        Say or type what is the time.
+        Say or type what is the date.
+        Say or type what day is today.
 
-        Face detection command:
-        Computer vision commands:
-        Say start face detection.
-        Say face detection.
-        start age detection
-        start gender detection
-        age gender detection
-
-        Say stop to close me.
+        Say or type stop to close me.
         """
         safe_speak(help_text)
+        return True
 
     # 5. Time command
-    elif (
+    if (
         "time" in command
         or "current time" in command
         or "what is the time" in command
+        or "tell me the time" in command
     ):
         current_time = datetime.datetime.now().strftime("%I:%M %p")
         safe_speak(f"The time is {current_time}")
+        return True
 
     # 6. Date and day command
-    elif (
+    if (
         "date" in command
         or "today date" in command
+        or "what is the date" in command
         or "what day is today" in command
         or "day today" in command
     ):
         today = datetime.datetime.now()
         formatted_date = today.strftime("%A, %B %d, %Y")
         safe_speak(f"Today is {formatted_date}")
+        return True
 
     # 7. YouTube search command
-    elif command.startswith("youtube search"):
+    if command.startswith("youtube search"):
         query = command.replace("youtube search", "", 1).strip()
 
         if query:
@@ -205,8 +293,10 @@ def process_command(command):
         else:
             safe_speak("What should I search on YouTube?")
 
+        return True
+
     # 8. Google search command
-    elif command.startswith("search"):
+    if command.startswith("search"):
         query = command.replace("search", "", 1).strip()
 
         if query:
@@ -215,8 +305,10 @@ def process_command(command):
         else:
             safe_speak("What should I search for?")
 
+        return True
+
     # 9. Memory system
-    elif command.startswith("remember"):
+    if command.startswith("remember"):
         memory_text = command.replace("remember", "", 1).strip()
 
         if memory_text:
@@ -225,16 +317,20 @@ def process_command(command):
         else:
             safe_speak("What should I remember?")
 
-    elif "what do you remember" in command or "show memory" in command:
+        return True
+
+    if "what do you remember" in command or "show memory" in command or "read memory" in command:
         memories = read_memory()
         safe_speak(memories)
+        return True
 
-    elif "clear memory" in command or "delete memory" in command:
+    if "clear memory" in command or "delete memory" in command:
         response = clear_memory()
         safe_speak(response)
+        return True
 
     # 10. Notes system
-    elif command.startswith("take note") or command.startswith("add note"):
+    if command.startswith("take note") or command.startswith("add note"):
         if command.startswith("take note"):
             note_text = command.replace("take note", "", 1).strip()
         else:
@@ -246,149 +342,204 @@ def process_command(command):
         else:
             safe_speak("What note should I save?")
 
-    elif "show notes" in command or "read notes" in command:
+        return True
+
+    if "show notes" in command or "read notes" in command:
         notes = read_notes()
         safe_speak(notes)
+        return True
 
-    elif "clear notes" in command or "delete notes" in command:
+    if "clear notes" in command or "delete notes" in command:
         response = clear_notes()
         safe_speak(response)
+        return True
 
     # 11. Password strength checker
-    elif command.startswith("check password strength"):
+    if command.startswith("check password strength"):
         password = command.replace("check password strength", "", 1).strip()
 
         if password:
             response = check_password_strength(password)
             safe_speak(response)
         else:
-            safe_speak("Please say a demo password after check password strength.")
+            safe_speak("Please say or type a demo password after check password strength.")
 
-    elif command.startswith("check password"):
+        return True
+
+    if command.startswith("check password"):
         password = command.replace("check password", "", 1).strip()
 
         if password:
             response = check_password_strength(password)
             safe_speak(response)
         else:
-            safe_speak("Please say a demo password after check password.")
+            safe_speak("Please say or type a demo password after check password.")
 
-    elif command.startswith("password strength"):
+        return True
+
+    if command.startswith("password strength"):
         password = command.replace("password strength", "", 1).strip()
 
         if password:
             response = check_password_strength(password)
             safe_speak(response)
         else:
-            safe_speak("Please say a demo password after password strength.")
+            safe_speak("Please say or type a demo password after password strength.")
 
-        # Age and gender detection
-    elif (
+        return True
+
+    # 12. Face detection
+    if (
         "start face detection" in command
+        or command == "face detection"
+        or "detect face" in command
+    ):
+        safe_speak("Starting face detection. Press Q to stop.")
+        response = start_face_detection()
+        safe_speak(response)
+        return True
+
+    # 13. Age and gender detection
+    if (
+        "start age detection" in command
         or "start gender detection" in command
         or "age gender detection" in command
+        or "age and gender detection" in command
         or "detect age" in command
         or "detect gender" in command
     ):
         safe_speak("Starting age and gender detection. Press Q to stop.")
         response = start_age_gender_detection()
         safe_speak(response)
+        return True
 
-            # Hand tracking
-    elif (
+    # 14. Hand tracking / gesture control
+    if (
         "start hand tracking" in command
         or "hand tracking" in command
         or "detect hand" in command
         or "track hand" in command
+        or "gesture control" in command
+        or "gesture assistant" in command
     ):
-        safe_speak("Starting hand tracking. Press Q to stop.")
+        safe_speak("Starting gesture controlled assistant. Press Q to stop.")
         response = start_hand_tracking()
         safe_speak(response)
-   
+        return True
 
-    # 12. Folder automation
-    elif "open downloads folder" in command or "open download folder" in command:
+    # 15. Vision logs
+    if "show vision logs" in command or "read vision logs" in command:
+        logs = read_vision_logs()
+        safe_speak(logs)
+        return True
+
+    if "clear vision logs" in command or "delete vision logs" in command:
+        response = clear_vision_logs()
+        safe_speak(response)
+        return True
+
+    # 16. Folder automation
+    if "open downloads folder" in command or "open download folder" in command:
         response = open_folder("downloads")
         safe_speak(response)
+        return True
 
-    elif "open desktop folder" in command or "open desktop" in command:
+    if "open desktop folder" in command or "open desktop" in command:
         response = open_folder("desktop")
         safe_speak(response)
+        return True
 
-    elif "open documents folder" in command or "open document folder" in command:
+    if "open documents folder" in command or "open document folder" in command:
         response = open_folder("documents")
         safe_speak(response)
+        return True
 
-    elif "open pictures folder" in command or "open picture folder" in command:
+    if "open pictures folder" in command or "open picture folder" in command:
         response = open_folder("pictures")
         safe_speak(response)
+        return True
 
-    elif "open music folder" in command:
+    if "open music folder" in command:
         response = open_folder("music")
         safe_speak(response)
+        return True
 
-    elif "open videos folder" in command or "open video folder" in command:
+    if "open videos folder" in command or "open video folder" in command:
         response = open_folder("videos")
         safe_speak(response)
+        return True
 
-    # 13. Safe shutdown/restart
-    elif "shutdown computer" in command or "shut down computer" in command:
+    # 17. Safe shutdown/restart
+    if "shutdown computer" in command or "shutdown pc" in command or "shutdown laptop" in command:
         pending_action = "shutdown"
-        safe_speak("Are you sure? Say confirm shutdown to continue or cancel to stop.")
+        safe_speak("Are you sure? Say or type confirm shutdown to continue or cancel to stop.")
+        return True
 
-    elif "restart computer" in command or "reboot computer" in command:
+    if "restart computer" in command or "reboot computer" in command or "restart pc" in command:
         pending_action = "restart"
-        safe_speak("Are you sure? Say confirm restart to continue or cancel to stop.")
+        safe_speak("Are you sure? Say or type confirm restart to continue or cancel to stop.")
+        return True
 
-    elif "cancel shutdown" in command or "abort shutdown" in command:
+    if "cancel shutdown" in command or "abort shutdown" in command:
         response = cancel_shutdown()
         safe_speak(response)
+        return True
 
-    # 14. Website commands
-    elif "youtube" in command:
+    # 18. Website commands
+    if "youtube" in command:
         safe_speak("Opening YouTube")
         open_website("https://www.youtube.com")
+        return True
 
-    elif "google" in command:
+    if "google" in command:
         safe_speak("Opening Google")
         open_website("https://www.google.com")
+        return True
 
-    elif "github" in command:
+    if "github" in command:
         safe_speak("Opening GitHub")
         open_website("https://github.com")
+        return True
 
-    elif "gmail" in command:
+    if "gmail" in command:
         safe_speak("Opening Gmail")
         open_website("https://mail.google.com")
+        return True
 
-    elif "chatgpt" in command or "chat gpt" in command:
+    if "chatgpt" in command or "chat gpt" in command:
         safe_speak("Opening ChatGPT")
         open_website("https://chatgpt.com")
+        return True
 
-    elif "facebook" in command:
+    if "facebook" in command:
         safe_speak("Opening Facebook")
         open_website("https://www.facebook.com")
+        return True
 
-    elif "stack overflow" in command or "stackoverflow" in command:
+    if "stack overflow" in command or "stackoverflow" in command:
         safe_speak("Opening Stack Overflow")
         open_website("https://stackoverflow.com")
+        return True
 
-    # 15. App commands
-    elif "chrome" in command:
+    # 19. App commands
+    if "chrome" in command:
         safe_speak("Opening Chrome")
         open_app("chrome")
+        return True
 
-    elif "notepad" in command:
+    if "notepad" in command:
         safe_speak("Opening Notepad")
         open_app("notepad")
+        return True
 
-    elif "calculator" in command:
+    if "calculator" in command:
         safe_speak("Opening Calculator")
         open_app("calculator")
+        return True
 
-    # 16. Wikipedia commands kept near the end
+    # 20. Wikipedia commands kept near the end
     # This prevents "what is the time" from going to Wikipedia
-    elif command.startswith("who is"):
+    if command.startswith("who is"):
         query = command.replace("who is", "", 1).strip()
 
         if query:
@@ -398,7 +549,9 @@ def process_command(command):
         else:
             safe_speak("Who should I search for?")
 
-    elif command.startswith("what is"):
+        return True
+
+    if command.startswith("what is"):
         query = command.replace("what is", "", 1).strip()
 
         if query:
@@ -408,10 +561,10 @@ def process_command(command):
         else:
             safe_speak("What should I search for?")
 
-    # 17. Unknown command
-    else:
-        safe_speak("This command is not available yet.")
+        return True
 
+    # 21. Unknown command
+    safe_speak("This command is not available yet.")
     return True
 
 
@@ -419,15 +572,15 @@ def main():
     greeting = get_greeting()
     safe_speak(f"{greeting} Salman Farshi. Your AI assistant is ready.")
 
+    print("\nInput guide:")
+    print("- Type a command and press Enter to use text command.")
+    print("- Press Enter without typing to use voice command.")
+    print("- Type stop to close the assistant.")
+
     running = True
 
     while running:
-        command = safe_listen()
-
-        if command is None:
-            safe_speak("Assistant stopped because microphone is not available.")
-            break
-
+        command = get_user_command()
         running = safe_process_command(command)
 
 

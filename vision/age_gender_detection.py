@@ -1,4 +1,5 @@
 from pathlib import Path
+from vision.vision_logger import log_vision_event
 import cv2
 
 
@@ -109,6 +110,8 @@ def start_age_gender_detection():
 
     if not camera.isOpened():
         return "Camera could not be opened."
+    
+    log_vision_event("Age and gender detection started.")
 
     print("Age and gender detection started. Press 'q' to stop.")
 
@@ -189,6 +192,8 @@ def start_age_gender_detection():
 
     camera.release()
     cv2.destroyAllWindows()
+
+    log_vision_event("Age and gender detection stopped.")
 
     return "Age and gender detection stopped."
 
