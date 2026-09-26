@@ -1,0 +1,3 @@
+# Optional pretrained AST inference; install alongside requirements.txt.
+-r requirements-emotion.txt
+# AST can use the Transformers NumPy feature-extraction fallback without torchaudio.

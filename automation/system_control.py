@@ -36,6 +36,9 @@ def open_folder(folder_name):
         elif system == "Linux":
             subprocess.Popen(["xdg-open", str(folder_path)])
 
+        else:
+            return "Opening folders is not supported on this system."
+
         return f"Opening {folder_name} folder."
 
     except Exception as e:
@@ -47,15 +50,15 @@ def shutdown_computer():
 
     try:
         if system == "Windows":
-            subprocess.Popen(["shutdown", "/s", "/t", "10"])
+            subprocess.run(["shutdown", "/s", "/t", "10"], check=True, capture_output=True, text=True, timeout=15)
             return "Shutdown scheduled in 10 seconds."
 
         elif system == "Darwin":
-            subprocess.Popen(["osascript", "-e", 'tell application "System Events" to shut down'])
+            subprocess.run(["osascript", "-e", 'tell application "System Events" to shut down'], check=True, capture_output=True, text=True, timeout=15)
             return "Shutting down the computer."
 
         elif system == "Linux":
-            subprocess.Popen(["systemctl", "poweroff"])
+            subprocess.run(["systemctl", "poweroff"], check=True, capture_output=True, text=True, timeout=15)
             return "Shutting down the computer."
 
         else:
@@ -70,15 +73,15 @@ def restart_computer():
 
     try:
         if system == "Windows":
-            subprocess.Popen(["shutdown", "/r", "/t", "10"])
+            subprocess.run(["shutdown", "/r", "/t", "10"], check=True, capture_output=True, text=True, timeout=15)
             return "Restart scheduled in 10 seconds."
 
         elif system == "Darwin":
-            subprocess.Popen(["osascript", "-e", 'tell application "System Events" to restart'])
+            subprocess.run(["osascript", "-e", 'tell application "System Events" to restart'], check=True, capture_output=True, text=True, timeout=15)
             return "Restarting the computer."
 
         elif system == "Linux":
-            subprocess.Popen(["systemctl", "reboot"])
+            subprocess.run(["systemctl", "reboot"], check=True, capture_output=True, text=True, timeout=15)
             return "Restarting the computer."
 
         else:
@@ -93,7 +96,7 @@ def cancel_shutdown():
 
     try:
         if system == "Windows":
-            subprocess.Popen(["shutdown", "/a"])
+            subprocess.run(["shutdown", "/a"], check=True, capture_output=True, text=True, timeout=15)
             return "Shutdown or restart has been cancelled."
 
         else:

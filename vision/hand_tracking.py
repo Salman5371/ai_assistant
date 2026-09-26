@@ -438,149 +438,153 @@ def start_hand_tracking():
 
     camera = cv2.VideoCapture(0)
 
-    if not camera.isOpened():
-        return "Camera could not be opened."
+    try:
+        if not camera.isOpened():
+            return "Camera could not be opened."
 
-    camera.set(cv2.CAP_PROP_FRAME_WIDTH, WINDOW_WIDTH)
-    camera.set(cv2.CAP_PROP_FRAME_HEIGHT, WINDOW_HEIGHT)
+        camera.set(cv2.CAP_PROP_FRAME_WIDTH, WINDOW_WIDTH)
+        camera.set(cv2.CAP_PROP_FRAME_HEIGHT, WINDOW_HEIGHT)
 
-    cv2.namedWindow("Gesture Controlled Assistant", cv2.WINDOW_NORMAL)
-    cv2.resizeWindow("Gesture Controlled Assistant", WINDOW_WIDTH, WINDOW_HEIGHT)
+        cv2.namedWindow("Gesture Controlled Assistant", cv2.WINDOW_NORMAL)
+        cv2.resizeWindow("Gesture Controlled Assistant", WINDOW_WIDTH, WINDOW_HEIGHT)
 
-    log_vision_event("Hand-specific gesture control started.")
-    print("Hand-specific gesture control started. Press 'q' to stop.")
+        log_vision_event("Hand-specific gesture control started.")
+        print("Hand-specific gesture control started. Press 'q' to stop.")
 
-    start_time = time.time()
-    previous_time = time.time()
+        start_time = time.time()
+        previous_time = time.time()
 
-    assistant_active = False
-    last_action = "Waiting"
-    last_gesture = None
-    last_action_time = 0
+        assistant_active = False
+        last_action = "Waiting"
+        last_gesture = None
+        last_action_time = 0
 
-    action_cooldown = 3
-    should_stop_camera = False
+        action_cooldown = 3
+        should_stop_camera = False
 
-    with vision.HandLandmarker.create_from_options(options) as landmarker:
-        while True:
-            success, frame = camera.read()
+        with vision.HandLandmarker.create_from_options(options) as landmarker:
+            while True:
+                success, frame = camera.read()
 
-            if not success:
-                break
+                if not success:
+                    break
 
-            if MIRROR_VIEW:
-                frame = cv2.flip(frame, 1)
+                if MIRROR_VIEW:
+                    frame = cv2.flip(frame, 1)
 
-            rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
-            mp_image = mp.Image(
-                image_format=mp.ImageFormat.SRGB,
-                data=rgb_frame,
-            )
+                mp_image = mp.Image(
+                    image_format=mp.ImageFormat.SRGB,
+                    data=rgb_frame,
+                )
 
-            timestamp_ms = int((time.time() - start_time) * 1000)
-            result = landmarker.detect_for_video(mp_image, timestamp_ms)
+                timestamp_ms = int((time.time() - start_time) * 1000)
+                result = landmarker.detect_for_video(mp_image, timestamp_ms)
 
-            total_hands = 0
-            total_fingers = 0
+                total_hands = 0
+                total_fingers = 0
 
-            current_time = time.time()
-            fps = 1 / (current_time - previous_time) if current_time != previous_time else 0
-            previous_time = current_time
+                current_time = time.time()
+                fps = 1 / (current_time - previous_time) if current_time != previous_time else 0
+                previous_time = current_time
 
-            frame_height, frame_width, _ = frame.shape
+                frame_height, frame_width, _ = frame.shape
 
-            if result.hand_landmarks:
-                total_hands = len(result.hand_landmarks)
+                if result.hand_landmarks:
+                    total_hands = len(result.hand_landmarks)
 
-                for index, hand_landmarks in enumerate(result.hand_landmarks):
-                    detected_label = "Unknown"
+                    for index, hand_landmarks in enumerate(result.hand_landmarks):
+                        detected_label = "Unknown"
 
-                    if result.handedness and len(result.handedness) > index:
-                        detected_label = result.handedness[index][0].category_name
+                        if result.handedness and len(result.handedness) > index:
+                            detected_label = result.handedness[index][0].category_name
 
-                    display_label = swap_hand_label(detected_label) if MIRROR_VIEW else detected_label
+                        display_label = swap_hand_label(detected_label) if MIRROR_VIEW else detected_label
 
-                    gesture_name, fingers = detect_gesture(hand_landmarks)
-                    total_fingers += fingers
+                        gesture_name, fingers = detect_gesture(hand_landmarks)
+                        total_fingers += fingers
 
-                    x1, y1, x2, y2 = get_hand_box(
-                        hand_landmarks,
-                        frame_width,
-                        frame_height,
-                    )
-
-                    cv2.rectangle(
-                        frame,
-                        (x1, y1),
-                        (x2, y2),
-                        (0, 255, 0),
-                        2,
-                    )
-
-                    draw_hand_landmarks(frame, hand_landmarks)
-
-                    label_text = f"{display_label}: {gesture_name} ({fingers})"
-
-                    label_y = y2 + 30
-
-                    if label_y > frame_height - 20:
-                        label_y = y1 - 15
-
-                    if label_y < 30:
-                        label_y = 30
-
-                    draw_text_with_background(
-                        frame,
-                        label_text,
-                        (x1, label_y),
-                        font_scale=0.65,
-                        text_color=(0, 255, 0),
-                    )
-
-                    gesture_key = f"{display_label}:{gesture_name}"
-
-                    can_run_action = (
-                        gesture_name != "Unknown Gesture"
-                        and (
-                            gesture_key != last_gesture
-                            or current_time - last_action_time > action_cooldown
-                        )
-                    )
-
-                    if can_run_action:
-                        assistant_active, last_action, should_stop_camera = handle_gesture_action(
-                            gesture_name,
-                            display_label,
-                            assistant_active,
+                        x1, y1, x2, y2 = get_hand_box(
+                            hand_landmarks,
+                            frame_width,
+                            frame_height,
                         )
 
-                        last_gesture = gesture_key
-                        last_action_time = current_time
+                        cv2.rectangle(
+                            frame,
+                            (x1, y1),
+                            (x2, y2),
+                            (0, 255, 0),
+                            2,
+                        )
 
-            else:
-                last_gesture = None
+                        draw_hand_landmarks(frame, hand_landmarks)
 
-            draw_info_panel(
-                frame,
-                total_hands,
-                total_fingers,
-                fps,
-                assistant_active,
-                last_action,
-            )
+                        label_text = f"{display_label}: {gesture_name} ({fingers})"
 
-            cv2.imshow("Gesture Controlled Assistant", frame)
+                        label_y = y2 + 30
 
-            if should_stop_camera:
-                time.sleep(1)
-                break
+                        if label_y > frame_height - 20:
+                            label_y = y1 - 15
 
-            if cv2.waitKey(1) & 0xFF == ord("q"):
-                break
+                        if label_y < 30:
+                            label_y = 30
 
-    camera.release()
-    cv2.destroyAllWindows()
+                        draw_text_with_background(
+                            frame,
+                            label_text,
+                            (x1, label_y),
+                            font_scale=0.65,
+                            text_color=(0, 255, 0),
+                        )
+
+                        gesture_key = f"{display_label}:{gesture_name}"
+
+                        can_run_action = (
+                            gesture_name != "Unknown Gesture"
+                            and (
+                                gesture_key != last_gesture
+                                or current_time - last_action_time > action_cooldown
+                            )
+                        )
+
+                        if can_run_action:
+                            assistant_active, last_action, should_stop_camera = handle_gesture_action(
+                                gesture_name,
+                                display_label,
+                                assistant_active,
+                            )
+
+                            if should_stop_camera:
+                                break
+
+                            last_gesture = gesture_key
+                            last_action_time = current_time
+
+                else:
+                    last_gesture = None
+
+                draw_info_panel(
+                    frame,
+                    total_hands,
+                    total_fingers,
+                    fps,
+                    assistant_active,
+                    last_action,
+                )
+
+                cv2.imshow("Gesture Controlled Assistant", frame)
+
+                if should_stop_camera:
+                    time.sleep(1)
+                    break
+
+                if cv2.waitKey(1) & 0xFF == ord("q"):
+                    break
+    finally:
+        camera.release()
+        cv2.destroyAllWindows()
 
     log_vision_event("Hand-specific gesture control stopped.")
     return "Hand-specific gesture control stopped."

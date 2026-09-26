@@ -16,51 +16,55 @@ def start_face_detection():
 
     camera = cv2.VideoCapture(0)
 
-    if not camera.isOpened():
-        return "Camera could not be opened."
+    try:
+        if not camera.isOpened():
+            return "Camera could not be opened."
 
-    print("Face detection started. Press 'q' to stop.")
+        print("Face detection started. Press 'q' to stop.")
 
-    while True:
-        success, frame = camera.read()
+        while True:
+            success, frame = camera.read()
 
-        if not success:
-            break
+            if not success:
+                break
 
-        gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+            gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
-        faces = face_cascade.detectMultiScale(
-            gray_frame,
-            scaleFactor=1.1,
-            minNeighbors=5,
-            minSize=(30, 30)
-        )
+            faces = face_cascade.detectMultiScale(
+                gray_frame,
+                scaleFactor=1.1,
+                minNeighbors=5,
+                minSize=(30, 30)
+            )
 
-        for (x, y, width, height) in faces:
-            cv2.rectangle(
+            for (x, y, width, height) in faces:
+                cv2.rectangle(
+                    frame,
+                    (x, y),
+                    (x + width, y + height),
+                    (0, 255, 0),
+                    2
+                )
+
+            cv2.putText(
                 frame,
-                (x, y),
-                (x + width, y + height),
+                f"Faces detected: {len(faces)}",
+                (10, 30),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                1,
                 (0, 255, 0),
                 2
             )
 
-        cv2.putText(
-            frame,
-            f"Faces detected: {len(faces)}",
-            (10, 30),
-            cv2.FONT_HERSHEY_SIMPLEX,
-            1,
-            (0, 255, 0),
-            2
-        )
+            cv2.imshow("Face Detection", frame)
 
-        cv2.imshow("Face Detection", frame)
-
-        if cv2.waitKey(1) & 0xFF == ord("q"):
-            break
-
-    camera.release()
-    cv2.destroyAllWindows()
+            if cv2.waitKey(1) & 0xFF == ord("q"):
+                break
+    finally:
+        camera.release()
+        cv2.destroyAllWindows()
 
     return "Face detection stopped."
+
+if __name__ == "__main__":
+    print(start_face_detection())

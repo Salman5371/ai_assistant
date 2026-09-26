@@ -108,90 +108,91 @@ def start_age_gender_detection():
 
     camera = cv2.VideoCapture(0)
 
-    if not camera.isOpened():
-        return "Camera could not be opened."
-    
-    log_vision_event("Age and gender detection started.")
+    try:
+        if not camera.isOpened():
+            return "Camera could not be opened."
 
-    print("Age and gender detection started. Press 'q' to stop.")
+        log_vision_event("Age and gender detection started.")
 
-    padding = 20
+        print("Age and gender detection started. Press 'q' to stop.")
 
-    while True:
-        success, frame = camera.read()
+        padding = 20
 
-        if not success:
-            break
+        while True:
+            success, frame = camera.read()
 
-        face_boxes = get_face_boxes(face_net, frame)
+            if not success:
+                break
 
-        for face_box in face_boxes:
-            x1, y1, x2, y2 = face_box
+            face_boxes = get_face_boxes(face_net, frame)
 
-            face = frame[
-                max(0, y1 - padding): min(y2 + padding, frame.shape[0] - 1),
-                max(0, x1 - padding): min(x2 + padding, frame.shape[1] - 1),
-            ]
+            for face_box in face_boxes:
+                x1, y1, x2, y2 = face_box
 
-            if face.size == 0:
-                continue
+                face = frame[
+                    max(0, y1 - padding): min(y2 + padding, frame.shape[0] - 1),
+                    max(0, x1 - padding): min(x2 + padding, frame.shape[1] - 1),
+                ]
 
-            blob = cv2.dnn.blobFromImage(
-                face,
-                1.0,
-                (227, 227),
-                MODEL_MEAN_VALUES,
-                swapRB=False,
-            )
+                if face.size == 0:
+                    continue
 
-            gender_net.setInput(blob)
-            gender_predictions = gender_net.forward()
-            gender = GENDER_LIST[gender_predictions[0].argmax()]
-            gender_confidence = gender_predictions[0].max() * 100
+                blob = cv2.dnn.blobFromImage(
+                    face,
+                    1.0,
+                    (227, 227),
+                    MODEL_MEAN_VALUES,
+                    swapRB=False,
+                )
 
-            age_net.setInput(blob)
-            age_predictions = age_net.forward()
-            age = AGE_LIST[age_predictions[0].argmax()]
-            age_confidence = age_predictions[0].max() * 100
+                gender_net.setInput(blob)
+                gender_predictions = gender_net.forward()
+                gender = GENDER_LIST[gender_predictions[0].argmax()]
+                gender_confidence = gender_predictions[0].max() * 100
 
-            label = f"{gender} {gender_confidence:.1f}% | Age {age} {age_confidence:.1f}%"
+                age_net.setInput(blob)
+                age_predictions = age_net.forward()
+                age = AGE_LIST[age_predictions[0].argmax()]
+                age_confidence = age_predictions[0].max() * 100
 
-            cv2.rectangle(
-                frame,
-                (x1, y1),
-                (x2, y2),
-                (0, 255, 0),
-                2,
-            )
+                label = f"{gender} {gender_confidence:.1f}% | Age {age} {age_confidence:.1f}%"
+
+                cv2.rectangle(
+                    frame,
+                    (x1, y1),
+                    (x2, y2),
+                    (0, 255, 0),
+                    2,
+                )
+
+                cv2.putText(
+                    frame,
+                    label,
+                    (x1, y1 - 10),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    0.7,
+                    (0, 255, 0),
+                    2,
+                    cv2.LINE_AA,
+                )
 
             cv2.putText(
                 frame,
-                label,
-                (x1, y1 - 10),
+                f"Faces detected: {len(face_boxes)}",
+                (10, 30),
                 cv2.FONT_HERSHEY_SIMPLEX,
-                0.7,
+                0.9,
                 (0, 255, 0),
                 2,
-                cv2.LINE_AA,
             )
 
-        cv2.putText(
-            frame,
-            f"Faces detected: {len(face_boxes)}",
-            (10, 30),
-            cv2.FONT_HERSHEY_SIMPLEX,
-            0.9,
-            (0, 255, 0),
-            2,
-        )
+            cv2.imshow("Age and Gender Detection", frame)
 
-        cv2.imshow("Age and Gender Detection", frame)
-
-        if cv2.waitKey(1) & 0xFF == ord("q"):
-            break
-
-    camera.release()
-    cv2.destroyAllWindows()
+            if cv2.waitKey(1) & 0xFF == ord("q"):
+                break
+    finally:
+        camera.release()
+        cv2.destroyAllWindows()
 
     log_vision_event("Age and gender detection stopped.")
 

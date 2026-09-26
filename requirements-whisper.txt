@@ -1,0 +1,2 @@
+# Optional local STT via CTranslate2; install alongside requirements.txt.
+faster-whisper>=1.1,<2

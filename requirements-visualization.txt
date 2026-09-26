@@ -1,0 +1,2 @@
+# Optional headless audio plots; install alongside requirements.txt.
+matplotlib>=3.9,<4

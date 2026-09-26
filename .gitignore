@@ -179,12 +179,9 @@ cython_debug/
 #  refer to https://docs.cursor.com/context/ignore-files
 .cursorignore
 .cursorindexingignore
-__pycache__/
 *.pyc
 *.pyo
 
-.env
-venv/
 .venv/
 
 .DS_Store
@@ -194,3 +191,24 @@ Thumbs.db
 .vscode/
 models/
 logs/
+# Local environments and personal assistant data
+.venv-*/
+memory.txt
+notes.txt
+tasks.txt
+.env.*
+!.env.example
+
+# Generated audio visualizations
+plots/
+
+# Private structured data and local evaluation outputs
+data/
+*.db
+*.db-*
+*.sqlite
+*.sqlite-*
+*.sqlite3
+*.sqlite3-*
+evaluation_results/
+.streamlit/secrets.toml
